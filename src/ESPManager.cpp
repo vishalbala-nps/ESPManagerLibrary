@@ -103,7 +103,7 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 ESPhttpUpdate.onProgress([](int cur, int total) {
                     Serial.printf("*em:UPDATE Progress: %d%% (%d/%d)\n", (cur * 100) / total, cur, total);
                 });
-
+                delay(2000); // Give some time for the Serial prints to complete
                 t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
                 switch (ret) {
                     case HTTP_UPDATE_FAILED:
