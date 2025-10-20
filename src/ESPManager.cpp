@@ -61,3 +61,46 @@ void ESPManager::reconnect() {
         _mqttClient.publish(statusTopic.c_str(), onlinePayload.c_str(), true);
     }
 }
+
+void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
+    if (_instance == nullptr) {
+        return;
+    }
+
+    String s_topic(topic);
+    payload[length] = '\0';
+    String s_payload((char*)payload);
+
+    String commandTopic = "device/command/" + _instance->_deviceId;
+    if (s_topic == commandTopic) {
+        StaticJsonDocument<200> doc;
+        deserializeJson(doc, s_payload);
+        const char* command = doc["command"];
+        if (strcmp(command, "update") == 0) {
+            const char* url = doc["url"];
+            if (url) {
+                Serial.println("*em:Got update command");
+                t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
+                switch (ret) {
+                    case HTTP_UPDATE_FAILED:
+                        Serial.printf("*em:HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                        break;
+                    case HTTP_UPDATE_NO_UPDATES:
+                        Serial.println("*em:HTTP_UPDATE_NO_UPDATES");
+                        break;
+                    case HTTP_UPDATE_OK:
+                        Serial.println("*em:HTTP_UPDATE_OK");
+                        break;
+                }
+            }
+        } else if (strcmp(command, "erase") == 0) {
+            if (_instance->_eraseCallback) {
+                _instance->_eraseCallback();
+            }
+        }
+    } else {
+        if (_instance->_messageCallback) {
+            _instance->_messageCallback(topic, payload, length);
+        }
+    }
+}
