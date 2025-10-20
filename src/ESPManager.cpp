@@ -59,6 +59,13 @@ void ESPManager::reconnect() {
         String statusTopic = "device/status/" + _deviceId;
         String onlinePayload = "{\"deviceId\":\"" + _deviceId + "\",\"status\":\"online\",\"version\":\"" + _appVersion + "\"}";
         _mqttClient.publish(statusTopic.c_str(), onlinePayload.c_str(), true);
+
+        String commandTopic = "device/command/" + _deviceId;
+        _mqttClient.subscribe(commandTopic.c_str());
+
+        if (_connectCallback) {
+            _connectCallback();
+        }
     }
 }
 
