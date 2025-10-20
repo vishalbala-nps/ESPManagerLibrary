@@ -60,8 +60,8 @@ void ESPManager::reconnect() {
         String onlinePayload = "{\"deviceId\":\"" + _deviceId + "\",\"status\":\"online\",\"version\":\"" + _appVersion + "\"}";
         _mqttClient.publish(statusTopic.c_str(), onlinePayload.c_str(), true);
 
-        String commandTopic = "device/command/" + _deviceId;
-        _mqttClient.subscribe(commandTopic.c_str());
+        String statusTopic = "device/status/" + _deviceId;
+        _mqttClient.subscribe(statusTopic.c_str());
 
         if (_connectCallback) {
             _connectCallback();
@@ -78,15 +78,29 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
     payload[length] = '\0';
     String s_payload((char*)payload);
 
-    String commandTopic = "device/command/" + _instance->_deviceId;
-    if (s_topic == commandTopic) {
+    String statusTopic = "device/status/" + _instance->_deviceId;
+    if (s_topic == statusTopic) {
+        if (length == 0) {
+            if (_instance->_eraseCallback) {
+                _instance->_eraseCallback();
+            }
+            ESP.restart();
+            return;
+        }
+
         StaticJsonDocument<200> doc;
         deserializeJson(doc, s_payload);
-        const char* command = doc["command"];
-        if (strcmp(command, "update") == 0) {
-            const char* url = doc["url"];
-            if (url) {
+        const char* action = doc["action"];
+
+        if (action == nullptr) {
+            return;
+        }
+
+        if (strcmp(action, "update") == 0) {
+            const char* version = doc["version"];
+            if (version) {
                 Serial.println("*em:Got update command");
+                String url = "http://" + _instance->_updateServer + "/api/updates/" + version + "/download";
                 t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
                 switch (ret) {
                     case HTTP_UPDATE_FAILED:
@@ -99,10 +113,6 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                         Serial.println("*em:HTTP_UPDATE_OK");
                         break;
                 }
-            }
-        } else if (strcmp(command, "erase") == 0) {
-            if (_instance->_eraseCallback) {
-                _instance->_eraseCallback();
             }
         }
     } else {
