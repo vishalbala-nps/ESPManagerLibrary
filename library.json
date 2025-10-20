@@ -1,0 +1,13 @@
+{
+  "name": "ESPManager",
+  "version": "1.0.0",
+  "author": "Vishal Bala",
+  "description": "A library for ESP32/ESP8266 to interact with ESPManager backend via MQTT.",
+  "keywords": "mqtt, esp32, esp8266, firmware, update, iot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vishalbala-nps/ESPManagerLibrary"
+  },
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32", "espressif8266"]
+}
