@@ -32,6 +32,10 @@ void ESPManager::onErase(EraseConfigCallback callback) {
     _eraseCallback = callback;
 }
 
+void ESPManager::onUpdateBegin(UpdateBeginCallback callback) {
+    _updateBeginCallback = callback;
+}
+
 void ESPManager::loop() {
     if (!_mqttClient.connected()) {
         long now = millis();
@@ -97,7 +101,12 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
         if (strcmp(action, "update") == 0) {
             const char* version = doc["version"];
             if (version) {
+                if (_instance->_updateBeginCallback) {
+                    _instance->_updateBeginCallback();
+                }
                 Serial.println("*em:Got update command");
+                String updatePayload = "{\"deviceId\":\"" + _instance->_deviceId + "\",\"status\":\"updating\",\"version\":\"" + _instance->_appVersion + "\"}";
+                _instance->_mqttClient.publish(statusTopic.c_str(), updatePayload.c_str(), true);
                 String url = "http://" + _instance->_updateServer + "/api/updates/" + version + "/download";
                 Serial.println("*em:Update URL: " + url);
                 ESPhttpUpdate.onProgress([](int cur, int total) {

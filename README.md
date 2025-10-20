@@ -183,6 +183,9 @@ Registers a callback function that is executed every time the client successfull
 `void onErase(EraseConfigCallback callback)`
 Registers a callback function that is executed when a remote reset command is received. This is where you should call the configuration erase function of your WiFi management library.
 
+`void onUpdateBegin(UpdateBeginCallback callback)`
+Registers a callback function that is executed just before the firmware update process begins. This is useful for saving state or disabling peripherals.
+
 ---
 
 ## Built-in Remote Commands
@@ -210,6 +213,14 @@ Registers a callback function that is executed when a remote reset command is re
 ## Automatic Status Messages
 
 To provide real-time device state, `ESPManager` automatically publishes status messages to the `device/status/<deviceId>` topic. These messages are sent with the `retain` flag set to `true`, ensuring that the last known status is always available to MQTT clients.
+
+### Updating Status
+
+-   **Published**: Just before the firmware update process begins.
+-   **Payload**: A JSON message indicating the device is updating.
+    ```json
+    {"deviceId": "<deviceId>", "status": "updating", "version": "<appVersion>"}
+    ```
 
 ### Online Status
 

@@ -12,6 +12,7 @@ public:
     typedef void (*MQTTMessageCallback)(char* topic, byte* payload, unsigned int length);
     typedef void (*MQTTConnectCallback)();
     typedef void (*EraseConfigCallback)();
+    typedef void (*UpdateBeginCallback)();
 
     ESPManager(WiFiClient& wifiClient);
 
@@ -21,6 +22,7 @@ public:
     void setMessageRecieveCallback(MQTTMessageCallback callback);
     void onConnect(MQTTConnectCallback callback);
     void onErase(EraseConfigCallback callback);
+    void onUpdateBegin(UpdateBeginCallback callback);
 
 private:
     void reconnect();
@@ -41,6 +43,7 @@ private:
     MQTTMessageCallback _messageCallback = nullptr;
     MQTTConnectCallback _connectCallback = nullptr;
     EraseConfigCallback _eraseCallback = nullptr;
+    UpdateBeginCallback _updateBeginCallback = nullptr;
 
     static ESPManager* _instance;
 };
