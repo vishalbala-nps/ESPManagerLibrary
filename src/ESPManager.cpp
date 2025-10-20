@@ -99,6 +99,11 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
             if (version) {
                 Serial.println("*em:Got update command");
                 String url = "http://" + _instance->_updateServer + "/api/updates/" + version + "/download";
+                Serial.println("*em:Update URL: " + url);
+                ESPhttpUpdate.onProgress([](int cur, int total) {
+                    Serial.printf("*em:UPDATE Progress: %d%% (%d/%d)\n", (cur * 100) / total, cur, total);
+                });
+
                 t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
                 switch (ret) {
                     case HTTP_UPDATE_FAILED:
