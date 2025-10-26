@@ -106,12 +106,18 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 Serial.println("*em:Got update command");
                 String updatePayload = "{\"deviceId\":\"" + _instance->_deviceId + "\",\"status\":\"updating\",\"version\":\"" + _instance->_appVersion + "\"}";
                 _instance->_mqttClient.publish(statusTopic.c_str(), updatePayload.c_str(), true);
+                
+                delay(2000);
+                _instance->_mqttClient.disconnect();
+                Serial.println("*em:Disconnected from MQTT broker for update");
+                delay(2000);
+
                 String url = "http://" + _instance->_updateServer + "/api/updates/" + version + "/download";
                 Serial.println("*em:Update URL: " + url);
                 ESPhttpUpdate.onProgress([](int cur, int total) {
                     Serial.printf("*em:UPDATE Progress: %d%% (%d/%d)\n", (cur * 100) / total, cur, total);
                 });
-                delay(2000); // Give some time for the Serial prints to complete
+                
                 t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
                 switch (ret) {
                     case HTTP_UPDATE_FAILED:
