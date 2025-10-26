@@ -82,16 +82,15 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
 
     String statusTopic = "device/status/" + _instance->_deviceId;
     if (s_topic == statusTopic) {
-        if (length == 0) {
-            if (_instance->_eraseCallback) {
-                _instance->_eraseCallback();
-            }
-            ESP.restart();
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, s_payload);
+
+        if (error) {
+            // Not a JSON payload, could be the blank message we published.
+            // Ignore it.
             return;
         }
 
-        StaticJsonDocument<200> doc;
-        deserializeJson(doc, s_payload);
         const char* action = doc["action"];
 
         if (action == nullptr) {
@@ -126,6 +125,16 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                         break;
                 }
             }
+        } else if (strcmp(action, "delete") == 0) {
+            Serial.println("*em:Got delete command");
+            _instance->_mqttClient.publish(statusTopic.c_str(), "", false);
+            delay(2000);
+            _instance->_mqttClient.disconnect();
+            Serial.println("*em:Disconnected from MQTT broker");
+            if (_instance->_eraseCallback) {
+                _instance->_eraseCallback();
+            }
+            ESP.restart();
         }
     } else {
         if (_instance->_messageCallback) {

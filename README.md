@@ -195,8 +195,11 @@ Registers a callback function that is executed just before the firmware update p
 ### Device Reset
 
 -   **Topic**: `device/status/<deviceId>`
--   **Payload**: (blank message)
--   **Action**: The device will gracefully disconnect from MQTT, execute the registered `onErase` callback, and restart.
+-   **Payload**: A JSON message with an `action` of `delete`.
+    ```json
+    {"action": "delete"}
+    ```
+-   **Action**: The device will publish a blank retained message to its status topic, gracefully disconnect from the MQTT broker, execute the registered `onErase` callback, and then restart.
 
 ### OTA Firmware Update
 
