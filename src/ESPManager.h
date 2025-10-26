@@ -16,7 +16,7 @@ public:
 
     ESPManager(WiFiClient& wifiClient);
 
-    void begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer);
+    void begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer, const char* statusTopic, const char* commandTopic, const char* infoTopic);
     void loop();
     PubSubClient& getClient();
     void setMessageRecieveCallback(MQTTMessageCallback callback);
@@ -38,6 +38,9 @@ private:
     String _mqttUser;
     String _mqttPassword;
     String _updateServer;
+    String _statusTopic;
+    String _commandTopic;
+    String _infoTopic;
 
     unsigned long _lastReconnectAttempt = 0;
     MQTTMessageCallback _messageCallback = nullptr;

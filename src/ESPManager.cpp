@@ -7,7 +7,7 @@ ESPManager::ESPManager(WiFiClient& wifiClient)
     _instance = this;
 }
 
-void ESPManager::begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer) {
+void ESPManager::begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer, const char* statusTopic, const char* commandTopic, const char* infoTopic) {
     _deviceId = deviceId;
     _appVersion = appVersion;
     _mqttServer = mqttServer;
@@ -15,6 +15,9 @@ void ESPManager::begin(const char* deviceId, const char* appVersion, const char*
     _mqttUser = mqttUser;
     _mqttPassword = mqttPassword;
     _updateServer = updateServer;
+    _statusTopic = statusTopic;
+    _commandTopic = commandTopic;
+    _infoTopic = infoTopic;
 
     _mqttClient.setServer(_mqttServer.c_str(), _mqttPort);
     _mqttClient.setCallback(mqttCallback);
@@ -54,16 +57,16 @@ PubSubClient& ESPManager::getClient() {
 
 void ESPManager::reconnect() {
     Serial.println("*em:Attempting MQTT connection...");
-    String lwtTopic = "device/status/" + _deviceId;
     String lwtPayload = "{\"deviceId\":\"" + _deviceId + "\",\"status\":\"offline\",\"version\":\"" + _appVersion + "\"}";
+    String fullStatusTopic = _statusTopic + "/" + _deviceId;
+    String fullCommandTopic = _commandTopic + "/" + _deviceId;
     
-    if (_mqttClient.connect(("ESPClient-" + _deviceId).c_str(), _mqttUser.c_str(), _mqttPassword.c_str(), lwtTopic.c_str(), 0, true, lwtPayload.c_str())) {
+    if (_mqttClient.connect(("ESPClient-" + _deviceId).c_str(), _mqttUser.c_str(), _mqttPassword.c_str(), fullStatusTopic.c_str(), 0, true, lwtPayload.c_str())) {
         Serial.println("*em:MQTT connected");
         
-        String statusTopic = "device/status/" + _deviceId;
         String onlinePayload = "{\"deviceId\":\"" + _deviceId + "\",\"status\":\"online\",\"version\":\"" + _appVersion + "\"}";
-        _mqttClient.publish(statusTopic.c_str(), onlinePayload.c_str(), true);
-        _mqttClient.subscribe(statusTopic.c_str());
+        _mqttClient.publish(fullStatusTopic.c_str(), onlinePayload.c_str(), true);
+        _mqttClient.subscribe(fullCommandTopic.c_str());
 
         if (_connectCallback) {
             _connectCallback();
@@ -80,15 +83,16 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
     payload[length] = '\0';
     String s_payload((char*)payload);
 
-    String statusTopic = "device/status/" + _instance->_deviceId;
-    if (s_topic == statusTopic) {
+    String fullCommandTopic = _instance->_commandTopic + "/" + _instance->_deviceId;
+    String fullStatusTopic = _instance->_statusTopic + "/" + _instance->_deviceId;
+    String fullInfoTopic = _instance->_infoTopic + "/" + _instance->_deviceId;
+
+    if (s_topic == fullCommandTopic) {
         StaticJsonDocument<200> doc;
         DeserializationError error = deserializeJson(doc, s_payload);
 
         if (error) {
-            // Not a JSON payload, could be the blank message we published.
-            // Ignore it.
-            return;
+            return; // Not a valid JSON command, ignore.
         }
 
         const char* action = doc["action"];
@@ -105,9 +109,8 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 }
                 Serial.println("*em:Got update command");
                 String updatePayload = "{\"deviceId\":\"" + _instance->_deviceId + "\",\"status\":\"updating\",\"version\":\"" + _instance->_appVersion + "\"}";
-                _instance->_mqttClient.publish(statusTopic.c_str(), updatePayload.c_str(), true);
+                _instance->_mqttClient.publish(fullStatusTopic.c_str(), updatePayload.c_str(), true);
                 
-                delay(2000);
                 _instance->_mqttClient.disconnect();
                 Serial.println("*em:Disconnected from MQTT broker for update");
                 delay(2000);
@@ -133,7 +136,7 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
             }
         } else if (strcmp(action, "delete") == 0) {
             Serial.println("*em:Got delete command");
-            _instance->_mqttClient.publish(statusTopic.c_str(), "", false);
+            _instance->_mqttClient.publish(fullStatusTopic.c_str(), "", false);
             delay(2000);
             _instance->_mqttClient.disconnect();
             Serial.println("*em:Disconnected from MQTT broker");
@@ -157,8 +160,7 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
             String infoPayload;
             serializeJson(doc, infoPayload);
             
-            String infoTopic = "device/info/" + _instance->_deviceId;
-            _instance->_mqttClient.publish(infoTopic.c_str(), infoPayload.c_str(), false);
+            _instance->_mqttClient.publish(fullInfoTopic.c_str(), infoPayload.c_str(), false);
         }
     } else {
         if (_instance->_messageCallback) {

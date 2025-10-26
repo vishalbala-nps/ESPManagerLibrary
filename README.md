@@ -165,8 +165,8 @@ void loop() {
 `ESPManager(WiFiClient& wifiClient)`
 The constructor requires a `WiFiClient` instance.
 
-`void begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer)`
-Initializes the manager with all necessary configuration.
+`void begin(const char* deviceId, const char* appVersion, const char* mqttServer, int mqttPort, const char* mqttUser, const char* mqttPassword, const char* updateServer, const char* statusTopic, const char* commandTopic, const char* infoTopic)`
+Initializes the manager with all necessary configuration. The topics provided are **base topics**; the library will automatically append `/<deviceId>` to them.
 
 `void loop()`
 Keeps the MQTT client connected and processes incoming messages. Must be called repeatedly in your main loop.
@@ -190,29 +190,29 @@ Registers a callback function that is executed just before the firmware update p
 
 ## Built-in Remote Commands
 
-`ESPManager` automatically subscribes to `device/status/<deviceId>` and listens for the following commands:
+`ESPManager` listens for commands on the topic you provide, which is constructed as `<commandTopic>/<deviceId>`.
 
 ### Device Reset
 
--   **Topic**: `device/status/<deviceId>`
+-   **Topic**: `<commandTopic>/<deviceId>`
 -   **Payload**: A JSON message with an `action` of `delete`.
     ```json
     {"action": "delete"}
     ```
--   **Action**: The device will publish a blank retained message to its status topic, gracefully disconnect from the MQTT broker, execute the registered `onErase` callback, and then restart.
+-   **Action**: The device will publish a blank message to its status topic, gracefully disconnect from the MQTT broker, execute the registered `onErase` callback, and then restart.
 
 ### Request Device Information
 
--   **Topic**: `device/status/<deviceId>`
+-   **Topic**: `<commandTopic>/<deviceId>`
 -   **Payload**: A JSON message with an `action` of `info`.
     ```json
     {"action": "info"}
     ```
--   **Action**: The device will publish a detailed JSON payload to the `device/info/<deviceId>` topic. This payload includes details like device ID, MAC address, firmware version, IP address, uptime, and more.
+-   **Action**: The device will publish a detailed JSON payload to `<infoTopic>/<deviceId>`. This payload includes details like device ID, MAC address, firmware version, IP address, uptime, and more.
 
 ### OTA Firmware Update
 
--   **Topic**: `device/status/<deviceId>`
+-   **Topic**: `<commandTopic>/<deviceId>`
 -   **Payload**: A JSON message with an `action` and `version`.
     ```json
     {"action": "update", "version": "1.0.1"}
@@ -224,7 +224,7 @@ Registers a callback function that is executed just before the firmware update p
 
 ## Automatic Status Messages
 
-To provide real-time device state, `ESPManager` automatically publishes status messages to the `device/status/<deviceId>` topic. These messages are sent with the `retain` flag set to `true`, ensuring that the last known status is always available to MQTT clients.
+To provide real-time device state, `ESPManager` automatically publishes status messages to `<statusTopic>/<deviceId>`. These messages are sent with the `retain` flag set to `true`, ensuring that the last known status is always available to MQTT clients.
 
 ### Updating Status
 
