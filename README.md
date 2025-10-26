@@ -130,7 +130,7 @@ void setup() {
     if (deviceId.length() > 0 && mqttServer.length() > 0) {
       espManager.begin(
         deviceId.c_str(),
-        "1.0.0", // Your app version
+        "default/1.00", // Your app version
         mqttServer.c_str(),
         1883,    // MQTT Port
         "user",  // MQTT User
@@ -215,7 +215,7 @@ Registers a callback function that is executed just before the firmware update p
 -   **Topic**: `<commandTopic>/<deviceId>`
 -   **Payload**: A JSON message with an `action` and `version`.
     ```json
-    {"action": "update", "version": "1.0.1"}
+    {"action": "update", "version": "default/1.01"}
     ```
 -   **Action**: The device will construct a URL and attempt to download the new firmware binary.
 -   **URL Format**: `http://<updateServer>/api/updates/<version>/download`
