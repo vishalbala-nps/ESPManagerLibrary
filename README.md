@@ -201,6 +201,15 @@ Registers a callback function that is executed just before the firmware update p
     ```
 -   **Action**: The device will publish a blank retained message to its status topic, gracefully disconnect from the MQTT broker, execute the registered `onErase` callback, and then restart.
 
+### Request Device Information
+
+-   **Topic**: `device/status/<deviceId>`
+-   **Payload**: A JSON message with an `action` of `info`.
+    ```json
+    {"action": "info"}
+    ```
+-   **Action**: The device will publish a detailed JSON payload to the `device/info/<deviceId>` topic. This payload includes details like device ID, MAC address, firmware version, IP address, uptime, and more.
+
 ### OTA Firmware Update
 
 -   **Topic**: `device/status/<deviceId>`

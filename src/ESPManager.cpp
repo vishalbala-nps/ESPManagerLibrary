@@ -133,7 +133,7 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
             }
         } else if (strcmp(action, "delete") == 0) {
             Serial.println("*em:Got delete command");
-            _instance->_mqttClient.publish(statusTopic.c_str(), "", true);
+            _instance->_mqttClient.publish(statusTopic.c_str(), "", false);
             delay(2000);
             _instance->_mqttClient.disconnect();
             Serial.println("*em:Disconnected from MQTT broker");
@@ -141,6 +141,24 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 _instance->_eraseCallback();
             }
             ESP.restart();
+        } else if (strcmp(action, "info") == 0) {
+            Serial.println("*em:Got info command");
+            StaticJsonDocument<512> doc;
+            doc["deviceId"] = _instance->_deviceId;
+            doc["macAddress"] = WiFi.macAddress();
+            doc["status"] = "online";
+            doc["firmwareVersion"] = _instance->_appVersion;
+            doc["ipAddress"] = WiFi.localIP().toString();
+            doc["uptime"] = millis();
+            doc["wifiSSID"] = WiFi.SSID();
+            doc["wifiStrength"] = WiFi.RSSI();
+            doc["freeHeap"] = ESP.getFreeHeap();
+
+            String infoPayload;
+            serializeJson(doc, infoPayload);
+            
+            String infoTopic = "device/info/" + _instance->_deviceId;
+            _instance->_mqttClient.publish(infoTopic.c_str(), infoPayload.c_str(), false);
         }
     } else {
         if (_instance->_messageCallback) {
