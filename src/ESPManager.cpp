@@ -136,7 +136,7 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
             }
         } else if (strcmp(action, "delete") == 0) {
             Serial.println("*em:Got delete command");
-            _instance->_mqttClient.publish(fullStatusTopic.c_str(), "", false);
+            _instance->_mqttClient.publish(fullStatusTopic.c_str(), "", true);
             delay(2000);
             _instance->_mqttClient.disconnect();
             Serial.println("*em:Disconnected from MQTT broker");
