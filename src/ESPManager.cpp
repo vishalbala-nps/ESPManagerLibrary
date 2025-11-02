@@ -130,7 +130,6 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 String url = "http://" + _instance->_updateServer + "/api/updates/" + version + "/download";
                 Serial.println("*em:Update URL: " + url);
                 ESPhttpUpdate.onProgress([](int cur, int total) {
-                    Serial.printf("*em:UPDATE Progress: %d%% (%d/%d)\n", (cur * 100) / total, cur, total);
                     if (_instance->_updateProgressCallback) {
                         _instance->_updateProgressCallback(cur, total);
                     }
@@ -153,7 +152,10 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                     case HTTP_UPDATE_OK:
                         Serial.println("*em:HTTP_UPDATE_OK");
                         if (_instance->_updateCompleteCallback) {
+                            Serial.println("*em:Update complete");
                             _instance->_updateCompleteCallback();
+                            delay(1000);
+                            ESP.restart();
                         }
                         break;
                 }
