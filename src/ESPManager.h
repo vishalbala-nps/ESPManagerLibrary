@@ -14,7 +14,6 @@ public:
     typedef void (*EraseConfigCallback)();
     typedef void (*UpdateBeginCallback)();
     typedef void (*UpdateProgressCallback)(int current, int total);
-    typedef void (*UpdateCompleteCallback)();
     typedef void (*UpdateFailedCallback)(int errorCode, const char* errorString);
 
     ESPManager(WiFiClient& wifiClient);
@@ -27,7 +26,6 @@ public:
     void onErase(EraseConfigCallback callback);
     void onUpdateBegin(UpdateBeginCallback callback);
     void onUpdateProgress(UpdateProgressCallback callback);
-    void onUpdateComplete(UpdateCompleteCallback callback);
     void onUpdateFailed(UpdateFailedCallback callback);
 
 private:
@@ -54,7 +52,6 @@ private:
     EraseConfigCallback _eraseCallback = nullptr;
     UpdateBeginCallback _updateBeginCallback = nullptr;
     UpdateProgressCallback _updateProgressCallback = nullptr;
-    UpdateCompleteCallback _updateCompleteCallback = nullptr;
     UpdateFailedCallback _updateFailedCallback = nullptr;
 
     static ESPManager* _instance;

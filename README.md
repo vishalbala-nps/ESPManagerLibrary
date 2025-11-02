@@ -121,7 +121,6 @@ void setup() {
   espManager.onErase(eraseDeviceConfig);
   espManager.onUpdateBegin(beforeUpdate);
   espManager.onUpdateProgress(updateProgress);
-  espManager.onUpdateComplete(updateComplete);
   espManager.onUpdateFailed(updateFailed);  // If WiFi connects, retrieve config and start ESPManager
   if (WiFi.status() == WL_CONNECTED) {
     // ... (Retrieve your config values) ...
@@ -190,9 +189,6 @@ Registers a callback function that is executed just before the firmware update p
 
 `void onUpdateProgress(UpdateProgressCallback callback)`
 Registers a callback function that is executed during the firmware update process to report download progress. The callback receives current bytes downloaded and total bytes.
-
-`void onUpdateComplete(UpdateCompleteCallback callback)`
-Registers a callback function that is executed when the firmware update completes successfully. The device will restart automatically after this callback.
 
 `void onUpdateFailed(UpdateFailedCallback callback)`
 Registers a callback function that is executed when the firmware update fails. The callback receives an error code and error message.

@@ -43,10 +43,6 @@ void ESPManager::onUpdateProgress(UpdateProgressCallback callback) {
     _updateProgressCallback = callback;
 }
 
-void ESPManager::onUpdateComplete(UpdateCompleteCallback callback) {
-    _updateCompleteCallback = callback;
-}
-
 void ESPManager::onUpdateFailed(UpdateFailedCallback callback) {
     _updateFailedCallback = callback;
 }
@@ -151,12 +147,8 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                         break;
                     case HTTP_UPDATE_OK:
                         Serial.println("*em:HTTP_UPDATE_OK");
-                        if (_instance->_updateCompleteCallback) {
-                            Serial.println("*em:Update complete");
-                            _instance->_updateCompleteCallback();
-                            delay(1000);
-                            ESP.restart();
-                        }
+                        // Note: Device will restart automatically after successful update
+                        // The updateCompleteCallback cannot be called here as restart is immediate
                         break;
                 }
             }
