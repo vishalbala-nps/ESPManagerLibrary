@@ -39,6 +39,18 @@ void ESPManager::onUpdateBegin(UpdateBeginCallback callback) {
     _updateBeginCallback = callback;
 }
 
+void ESPManager::onUpdateProgress(UpdateProgressCallback callback) {
+    _updateProgressCallback = callback;
+}
+
+void ESPManager::onUpdateComplete(UpdateCompleteCallback callback) {
+    _updateCompleteCallback = callback;
+}
+
+void ESPManager::onUpdateFailed(UpdateFailedCallback callback) {
+    _updateFailedCallback = callback;
+}
+
 void ESPManager::loop() {
     if (!_mqttClient.connected()) {
         long now = millis();
@@ -119,18 +131,30 @@ void ESPManager::mqttCallback(char* topic, byte* payload, unsigned int length) {
                 Serial.println("*em:Update URL: " + url);
                 ESPhttpUpdate.onProgress([](int cur, int total) {
                     Serial.printf("*em:UPDATE Progress: %d%% (%d/%d)\n", (cur * 100) / total, cur, total);
+                    if (_instance->_updateProgressCallback) {
+                        _instance->_updateProgressCallback(cur, total);
+                    }
                 });
                 
                 t_httpUpdate_return ret = ESPhttpUpdate.update(_instance->_wifiClient, url);
                 switch (ret) {
                     case HTTP_UPDATE_FAILED:
                         Serial.printf("*em:HTTP_UPDATE_FAILED Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                        if (_instance->_updateFailedCallback) {
+                            _instance->_updateFailedCallback(ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+                        }
                         break;
                     case HTTP_UPDATE_NO_UPDATES:
                         Serial.println("*em:HTTP_UPDATE_NO_UPDATES");
+                        if (_instance->_updateFailedCallback) {
+                            _instance->_updateFailedCallback(-1, "No updates available");
+                        }
                         break;
                     case HTTP_UPDATE_OK:
                         Serial.println("*em:HTTP_UPDATE_OK");
+                        if (_instance->_updateCompleteCallback) {
+                            _instance->_updateCompleteCallback();
+                        }
                         break;
                 }
             }
